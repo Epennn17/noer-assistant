@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation — Noerz Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #000;
+      --surface: #0d0d0d;
+      --surface-2: #141414;
+      --surface-3: #1c1c1c;
+      --line: rgba(255, 255, 255, 0.12);
+      --line-strong: rgba(255, 255, 255, 0.22);
+      --text: #fff;
+      --text-2: #a1a1a6;
+      --text-3: #6e6e73;
+      --badge-bg: rgba(255, 255, 255, 0.05);
+      --badge-line: rgba(255, 255, 255, 0.14);
+      --radius: 14px;
+      --radius-lg: 18px;
+      --max-w: 720px;
+      --ease: cubic-bezier(0.32, 0.72, 0, 1);
+      --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+      --overlay: rgba(0, 0, 0, 0.72);
+    }
+
+    html[data-theme="light"] {
+      --bg: #fff;
+      --surface: #fafafa;
+      --surface-2: #f2f2f3;
+      --surface-3: #e8e8ea;
+      --line: rgba(0, 0, 0, 0.10);
+      --line-strong: rgba(0, 0, 0, 0.20);
+      --text: #000;
+      --text-2: #555;
+      --text-3: #8a8a8e;
+      --badge-bg: rgba(0, 0, 0, 0.04);
+      --badge-line: rgba(0, 0, 0, 0.12);
+      --overlay: rgba(255, 255, 255, 0.72);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+      letter-spacing: -0.011em;
+      transition: background 0.3s var(--ease), color 0.3s var(--ease);
+    }
+
+    /* NAVBAR */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 14px 22px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--overlay);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--line);
+      transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
+    }
+
+    @media (max-width: 640px) {
+      .nav { padding: 12px 16px; }
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      flex-shrink: 0;
+    }
+
+    .brand-logo .logo-dark,
+    .brand-logo .logo-light {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .brand-logo .logo-light { display: none; }
+    html[data-theme="light"] .brand-logo .logo-dark { display: none; }
+    html[data-theme="light"] .brand-logo .logo-light { display: block; }
+
+    .brand-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .menu-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.2s var(--ease), transform 0.15s var(--ease), border-color 0.3s var(--ease);
+    }
+
+    .menu-btn:hover { background: var(--surface-3); border-color: var(--line-strong); }
+    .menu-btn:active { transform: scale(0.94); }
+
+    .menu-btn svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+    }
+
+    /* MENU PANEL */
+    .menu-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s var(--ease), visibility 0.3s var(--ease);
+    }
+
+    .menu-overlay.open { opacity: 1; visibility: visible; }
+
+    .menu-panel {
+      position: fixed;
+      top: 66px;
+      right: 16px;
+      width: 220px;
+      z-index: 210;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 6px;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-8px) scale(0.98);
+      transform-origin: top right;
+      transition: opacity 0.2s var(--ease-out), transform 0.2s var(--ease-out), visibility 0.2s var(--ease-out), background 0.3s var(--ease), border-color 0.3s var(--ease);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    @media (max-width: 640px) {
+      .menu-panel { top: 60px; right: 12px; width: 200px; }
+    }
+
+    .menu-panel.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    .menu-nav {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .menu-nav a {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: background 0.15s var(--ease);
+    }
+
+    .menu-nav a:hover { background: var(--surface-2); }
+
+    .menu-nav a svg {
+      width: 13px;
+      height: 13px;
+      stroke: var(--text-3);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .menu-divider {
+      height: 1px;
+      background: var(--line);
+      margin: 6px 4px;
+    }
+
+    .theme-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .theme-row .theme-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .theme-row .theme-label svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-2);
+      stroke-width: 1.8;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .switch {
+      position: relative;
+      width: 40px;
+      height: 24px;
+      border-radius: 100px;
+      background: var(--surface-3);
+      border: 1px solid var(--line);
+      cursor: pointer;
+      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+      flex-shrink: 0;
+    }
+
+    .switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--text);
+      transition: transform 0.25s var(--ease-out), background 0.2s var(--ease);
+    }
+
+    html[data-theme="light"] .switch::after {
+      transform: translateX(16px);
+      background: #fff;
+    }
+
+    html[data-theme="light"] .switch {
+      background: #000;
+      border-color: #000;
+    }
+
+    /* LAYOUT */
+    .container {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+
+    @media (max-width: 640px) {
+      .container { padding: 0 16px; }
+    }
+
+    /* PAGE HEADER */
+    .page-head {
+      padding: 96px 0 32px;
+      text-align: left;
+    }
+
+    @media (max-width: 640px) {
+      .page-head { padding: 80px 0 24px; }
+    }
+
+    .page-head h1 {
+      font-size: clamp(1.8rem, 4.5vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: -0.045em;
+      line-height: 1.1;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+
+    .page-head .sub {
+      color: var(--text-2);
+      font-size: 0.95rem;
+      max-width: 520px;
+      margin-bottom: 16px;
+      line-height: 1.55;
+    }
+
+    .page-head .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 100px;
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-line);
+      font-size: 0.72rem;
+      color: var(--text-2);
+      font-weight: 500;
+      transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
+    }
+
+    .badge .pip {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    /* DONATION CARDS */
+    .donation-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding-bottom: 48px;
+    }
+
+    .donation-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      transition: all 0.25s var(--ease-out), background 0.3s var(--ease), border-color 0.3s var(--ease);
+      position: relative;
+      overflow: hidden;
+      font-family: inherit;
+      text-align: left;
+      width: 100%;
+    }
+
+    .donation-card:hover {
+      background: var(--surface-2);
+      border-color: var(--line-strong);
+      transform: translateY(-2px);
+    }
+
+    .donation-card:active {
+      transform: translateY(0) scale(0.99);
+    }
+
+    .donation-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 13px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+      transition: background 0.3s var(--ease), border-color 0.3s var(--ease);
+    }
+
+    .donation-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 9px;
+      display: block;
+    }
+
+    .donation-icon svg {
+      width: 26px;
+      height: 26px;
+      stroke: var(--text);
+      stroke-width: 1.7;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.3s var(--ease);
+    }
+
+    .donation-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .donation-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.015em;
+      margin-bottom: 2px;
+    }
+
+    .donation-desc {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      line-height: 1.45;
+    }
+
+    .donation-card .arrow {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-3);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+      transition: transform 0.2s var(--ease), stroke 0.2s var(--ease);
+    }
+
+    .donation-card:hover .arrow {
+      transform: translateX(3px);
+      stroke: var(--text);
+    }
+
+    /* MODAL QRIS */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s var(--ease), visibility 0.25s var(--ease);
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 380px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+      transform: scale(0.94) translateY(8px);
+      transition: transform 0.3s var(--ease-out), background 0.3s var(--ease), border-color 0.3s var(--ease);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-overlay.open .modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .modal-head h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+    }
+
+    .modal-close:hover {
+      background: var(--surface-3);
+      border-color: var(--line-strong);
+    }
+
+    .modal-close svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+    }
+
+    .qris-wrap {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .qris-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .qris-note {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--text-2);
+      line-height: 1.5;
+    }
+
+    /* FOOTER */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 32px 0 24px;
+      margin-top: 32px;
+      transition: border-color 0.3s var(--ease);
+    }
+
+    .footer-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      padding: 0 22px;
+    }
+
+    @media (max-width: 640px) {
+      .footer-inner { padding: 0 16px; }
+    }
+
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    .footer-brand .brand-logo {
+      width: 26px;
+      height: 26px;
+      border-radius: 7px;
+    }
+
+    .footer-brand .brand-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .footer-tagline {
+      font-size: 0.9rem;
+      color: var(--text-2);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+
+    .footer-copy {
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--text-3);
+      font-size: 0.78rem;
+      text-align: center;
+      transition: border-color 0.3s var(--ease);
+    }
+
+    /* REVEAL */
+    .reveal {
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      html { scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="nav">
+    <a href="/" class="brand">
+      <div class="brand-logo">
+        <img class="logo-dark" src="assets/logo-dark.png" alt="Noerz Assistant" onerror="this.style.display='none'">
+        <img class="logo-light" src="assets/logo-light.png" alt="Noerz Assistant" onerror="this.style.display='none'">
+      </div>
+      <span class="brand-name">Noerz Assistant</span>
+    </a>
+
+    <button class="menu-btn" id="menuBtn" aria-label="Menu">
+      <svg viewBox="0 0 24 24">
+        <line x1="3" y1="7" x2="21" y2="7"/>
+        <line x1="3" y1="12" x2="21" y2="12"/>
+        <line x1="3" y1="17" x2="21" y2="17"/>
+      </svg>
+    </button>
+  </nav>
+
+  <!-- MENU PANEL -->
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <div class="menu-panel" id="menuPanel">
+    <ul class="menu-nav">
+      <li>
+        <a href="/">
+          Home
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="models.html">
+          Models
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="about.html">
+          About
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </li>
+      <li>
+        <a href="donation.html">
+          Donation
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </a>
+      </li>
+    </ul>
+
+    <div class="menu-divider"></div>
+
+    <div class="theme-row">
+      <span class="theme-label">
+        <svg viewBox="0 0 24 24" id="themeIcon">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <span id="themeText">Dark</span>
+      </span>
+      <div class="switch" id="themeSwitch" role="switch" aria-checked="false" tabindex="0"></div>
+    </div>
+  </div>
+
+  <!-- PAGE HEADER -->
+  <div class="container">
+    <section class="page-head">
+      <h1 class="reveal">Support Noerz</h1>
+      <p class="sub reveal">Kalau lu ngerasa Noerz Assistant bermanfaat, lu bisa support lewat salah satu channel di bawah. Setiap dukungan sangat berarti.</p>
+      <div class="badges reveal">
+        <span class="badge">
+          <span class="pip"></span>
+          Donations Open
+        </span>
+        <span class="badge">3 Channels</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- DONATION CARDS -->
+  <div class="container">
+    <div class="donation-list">
+
+      <!-- Saweria -->
+      <a href="https://saweria.co/noerholic" target="_blank" rel="noopener" class="donation-card reveal">
+        <div class="donation-icon">
+          <!-- Saweria: heart icon -->
+          <svg viewBox="0 0 24 24">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </div>
+        <div class="donation-body">
+          <div class="donation-title">Saweria</div>
+          <div class="donation-desc">Donasi instan via Saweria, support dengan nominal bebas.</div>
+        </div>
+        <svg class="arrow" viewBox="0 0 24 24">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </a>
+
+      <!-- Sociabuzz -->
+      <a href="https://sociabuzz.com/noerholic/tribe" target="_blank" rel="noopener" class="donation-card reveal">
+        <div class="donation-icon">
+          <!-- Sociabuzz: hexagon + dot pattern -->
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2l9 5v10l-9 5-9-5V7l9-5z"/>
+            <circle cx="12" cy="12" r="2.5"/>
+            <path d="M12 6.5v3M12 14.5v3M7.5 9.5l2.5 1.5M14 13l2.5 1.5M16.5 9.5L14 11M10 13l-2.5 1.5"/>
+          </svg>
+        </div>
+        <div class="donation-body">
+          <div class="donation-title">Sociabuzz</div>
+          <div class="donation-desc">Support lewat Sociabuzz Tribe, dukung konten dan project selanjutnya.</div>
+        </div>
+        <svg class="arrow" viewBox="0 0 24 24">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </a>
+
+      <!-- QRIS all payment -->
+      <button type="button" class="donation-card reveal" id="qrisBtn">
+        <div class="donation-icon">
+          <!-- QRIS: QR code pattern -->
+          <svg viewBox="0 0 24 24">
+            <rect x="3" y="3" width="7" height="7" rx="1"/>
+            <rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h3v3h-3z"/>
+            <path d="M19 14v2M19 19v2M14 19h2"/>
+          </svg>
+        </div>
+        <div class="donation-body">
+          <div class="donation-title">QRIS All Payment</div>
+          <div class="donation-desc">Scan & bayar dari aplikasi apapun — GoPay, OVO, Dana, LinkAja, mobile banking.</div>
+        </div>
+        <svg class="arrow" viewBox="0 0 24 24">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+
+      <div class="footer-brand">
+        <div class="brand-logo">
+          <img class="logo-dark" src="assets/logo-dark.png" alt="Noerz Assistant" onerror="this.style.display='none'">
+          <img class="logo-light" src="assets/logo-light.png" alt="Noerz Assistant" onerror="this.style.display='none'">
+        </div>
+        <span class="brand-name">Noerz Assistant</span>
+      </div>
+
+      <div class="footer-tagline">
+        26 AI Models. One Powerful Assistant.
+      </div>
+
+      <div class="footer-copy">
+        © 2026 Noerparties all right reserved.
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- MODAL QRIS -->
+  <div class="modal-overlay" id="qrisModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>QRIS All Payment</h3>
+        <button class="modal-close" id="qrisClose" aria-label="Tutup">
+          <svg viewBox="0 0 24 24">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="qris-wrap">
+        <img src="assets/qris.png" alt="QRIS Noerz Assistant" onerror="this.parentElement.innerHTML='<div style=&quot;color:#666;font-size:0.85rem;text-align:center;padding:20px;&quot;>QRIS belum di-upload.<br>Taruh di <code>assets/qris.png</code></div>'">
+      </div>
+
+      <p class="qris-note">
+        Scan pakai aplikasi apapun yang support QRIS.<br>
+        GoPay · OVO · Dana · ShopeePay · LinkAja · Mobile Banking
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // REVEAL
+    (function () {
+      const els = document.querySelectorAll('.reveal');
+      if (!('IntersectionObserver' in window)) {
+        els.forEach(el => el.classList.add('visible'));
+        return;
+      }
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const siblings = Array.from(entry.target.parentElement.querySelectorAll('.reveal'));
+            const idx = siblings.indexOf(entry.target);
+            const delay = idx >= 0 ? Math.min(idx * 60, 300) : 0;
+            setTimeout(() => entry.target.classList.add('visible'), delay);
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+      els.forEach(el => io.observe(el));
+    })();
+
+    // MENU
+    (function () {
+      const menuBtn = document.getElementById('menuBtn');
+      const menuPanel = document.getElementById('menuPanel');
+      const menuOverlay = document.getElementById('menuOverlay');
+
+      function openMenu() {
+        menuPanel.classList.add('open');
+        menuOverlay.classList.add('open');
+      }
+      function closeMenu() {
+        menuPanel.classList.remove('open');
+        menuOverlay.classList.remove('open');
+      }
+      function toggleMenu() {
+        if (menuPanel.classList.contains('open')) closeMenu();
+        else openMenu();
+      }
+
+      menuBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleMenu();
+      });
+      menuOverlay.addEventListener('click', closeMenu);
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+    })();
+
+    // THEME
+    (function () {
+      const root = document.documentElement;
+      const themeSwitch = document.getElementById('themeSwitch');
+      const themeText = document.getElementById('themeText');
+      const themeIcon = document.getElementById('themeIcon');
+
+      const saved = localStorage.getItem('noerz_theme');
+      if (saved === 'light') {
+        root.setAttribute('data-theme', 'light');
+        themeText.textContent = 'Light';
+        themeSwitch.setAttribute('aria-checked', 'true');
+        themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>';
+      }
+
+      function toggleTheme() {
+        const isLight = root.getAttribute('data-theme') === 'light';
+        if (isLight) {
+          root.removeAttribute('data-theme');
+          themeText.textContent = 'Dark';
+          themeSwitch.setAttribute('aria-checked', 'false');
+          themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+          localStorage.setItem('noerz_theme', 'dark');
+        } else {
+          root.setAttribute('data-theme', 'light');
+          themeText.textContent = 'Light';
+          themeSwitch.setAttribute('aria-checked', 'true');
+          themeIcon.innerHTML = '<circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/>';
+          localStorage.setItem('noerz_theme', 'light');
+        }
+      }
+
+      themeSwitch.addEventListener('click', toggleTheme);
+      themeSwitch.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleTheme();
+        }
+      });
+    })();
+
+    // QRIS MODAL
+    (function () {
+      const qrisBtn = document.getElementById('qrisBtn');
+      const qrisModal = document.getElementById('qrisModal');
+      const qrisClose = document.getElementById('qrisClose');
+
+      function openModal() {
+        qrisModal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closeModal() {
+        qrisModal.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+
+      qrisBtn.addEventListener('click', openModal);
+      qrisClose.addEventListener('click', closeModal);
+      qrisModal.addEventListener('click', (e) => {
+        if (e.target === qrisModal) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && qrisModal.classList.contains('open')) closeModal();
+      });
+    })();
+  </script>
+
+</body>
+</html>
